@@ -66,6 +66,7 @@ On Snowflake, `ai_kpi_narratives` does the same in-warehouse with **Cortex**, ke
 
 ## Run it
 ### Locally (no accounts needed)
+Requires **Python 3.10-3.13** (dbt does not support newer versions yet).
 ```bash
 pip install -r requirements.txt
 make data        # synthetic CSVs → data/raw/
