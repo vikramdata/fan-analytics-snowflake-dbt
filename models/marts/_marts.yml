@@ -1,0 +1,100 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Calendar dimension (2018–2026) used by all facts and the Power BI date table.
+    columns:
+      - name: date_day
+        data_tests: [unique, not_null]
+
+  - name: dim_teams
+    description: League clubs with their home venue.
+    columns:
+      - name: team_id
+        data_tests: [unique, not_null]
+      - name: home_venue_id
+        data_tests: [not_null]
+
+  - name: dim_venues
+    description: Venues and capacity.
+    columns:
+      - name: venue_id
+        data_tests: [unique, not_null]
+
+  - name: dim_games
+    description: One row per game with team names, matchup and result.
+    columns:
+      - name: game_id
+        data_tests: [unique, not_null]
+      - name: away_team_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_teams')
+                field: team_id
+
+  - name: dim_fans
+    description: Fan accounts enriched with purchase and engagement history and a simple segment.
+    columns:
+      - name: fan_id
+        data_tests: [unique, not_null]
+      - name: fan_segment
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Buyer + Digital", "Buyer only", "Digital only", "Dormant"]
+
+  - name: fct_ticket_orders
+    description: One row per valid ticket order (refunds included, flagged by order_status).
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: game_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_games')
+                field: game_id
+      - name: fan_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_fans')
+                field: fan_id
+      - name: net_amount
+        description: "{{ doc('net_ticket_revenue') }}"
+      - name: days_before_game
+        description: Booking lead time in days. Negative values would mean the order came after the game (blocked by DQ rules).
+
+  - name: fct_game_attendance
+    description: One row per game with sales, attendance, revenue and the core demand KPIs.
+    columns:
+      - name: game_id
+        data_tests: [unique, not_null]
+      - name: sell_through_pct
+        description: "{{ doc('sell_through_pct') }}"
+      - name: attendance
+        description: "{{ doc('attendance') }}"
+      - name: no_show_rate
+        description: "{{ doc('no_show_rate') }}"
+      - name: net_revenue_per_attendee
+        description: "{{ doc('revenue_per_attendee') }}"
+      - name: net_ticket_revenue
+        description: "{{ doc('net_ticket_revenue') }}"
+
+  - name: fct_fan_engagement_daily
+    description: Digital engagement per fan, day and platform. Basis for the engaged-fan KPI.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [fan_id, event_date, platform]
+    columns:
+      - name: fan_id
+        description: "{{ doc('engaged_fan') }}"
+        data_tests: [not_null]
+
+  - name: dq_quarantine_ticket_orders
+    description: Orders that failed a data quality rule, with the rule that failed. Reviewed, not deleted.
+    columns:
+      - name: dq_issue
+        data_tests: [not_null]

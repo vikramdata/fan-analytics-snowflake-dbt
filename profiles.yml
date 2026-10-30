@@ -1,0 +1,22 @@
+# Run dbt with: dbt build --profiles-dir .
+# dev  = local DuckDB (no account needed; used by CI)
+# prod = Snowflake (credentials come from environment variables, never committed)
+fan_analytics:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: duckdb
+      path: data/fan_analytics.duckdb
+      threads: 4
+
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: TRANSFORMER
+      warehouse: TRANSFORM_WH
+      database: FAN_ANALYTICS
+      schema: DBT
+      threads: 8
+      client_session_keep_alive: false

@@ -1,0 +1,132 @@
+version: 2
+
+# dbt Semantic Layer: metrics are defined once here so Power BI, notebooks and AI tools
+# query the same definitions instead of re-implementing them.
+models:
+  - name: metricflow_time_spine
+    description: Daily time spine for MetricFlow.
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        granularity: day
+
+semantic_models:
+  - name: game_attendance
+    description: Game-level sales and attendance.
+    model: ref('fct_game_attendance')
+    defaults:
+      agg_time_dimension: game_date
+    entities:
+      - name: game
+        type: primary
+        expr: game_id
+      - name: home_team
+        type: foreign
+        expr: home_team_id
+    dimensions:
+      - name: game_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: season
+        type: categorical
+      - name: game_type
+        type: categorical
+    measures:
+      - name: capacity
+        agg: sum
+      - name: tickets_sold
+        agg: sum
+      - name: attendance
+        agg: sum
+      - name: net_ticket_revenue
+        agg: sum
+      - name: games
+        agg: count
+        expr: game_id
+
+  - name: ticket_orders
+    description: Valid ticket orders.
+    model: ref('fct_ticket_orders')
+    defaults:
+      agg_time_dimension: order_date
+    entities:
+      - name: order
+        type: primary
+        expr: order_id
+      - name: game
+        type: foreign
+        expr: game_id
+      - name: fan
+        type: foreign
+        expr: fan_id
+    dimensions:
+      - name: order_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: sales_channel
+        type: categorical
+      - name: section_tier
+        type: categorical
+      - name: order_status
+        type: categorical
+    measures:
+      - name: order_net_revenue
+        agg: sum
+        expr: "case when order_status = 'COMPLETED' then net_amount else 0 end"
+      - name: orders
+        agg: count
+        expr: order_id
+      - name: ticket_buyers
+        agg: count_distinct
+        expr: fan_id
+
+metrics:
+  - name: net_ticket_revenue
+    label: Net ticket revenue
+    description: Gross ticket revenue minus discounts, completed orders only (CAD).
+    type: simple
+    type_params:
+      measure: net_ticket_revenue
+
+  - name: attendance
+    label: Attendance (scanned)
+    description: Tickets scanned at the gate.
+    type: simple
+    type_params:
+      measure: attendance
+
+  - name: tickets_sold
+    label: Tickets sold
+    type: simple
+    type_params:
+      measure: tickets_sold
+
+  - name: capacity
+    label: Venue capacity
+    type: simple
+    type_params:
+      measure: capacity
+
+  - name: sell_through_pct
+    label: Sell-through %
+    description: Tickets sold divided by venue capacity.
+    type: ratio
+    type_params:
+      numerator: tickets_sold
+      denominator: capacity
+
+  - name: net_revenue_per_attendee
+    label: Net revenue per attendee
+    type: ratio
+    type_params:
+      numerator: net_ticket_revenue
+      denominator: attendance
+
+  - name: ticket_buyers
+    label: Ticket buyers
+    type: simple
+    type_params:
+      measure: ticket_buyers

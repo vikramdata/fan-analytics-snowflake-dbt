@@ -1,0 +1,45 @@
+name: fan_analytics
+version: "1.0.0"
+config-version: 2
+profile: fan_analytics
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages", "logs"]
+
+vars:
+  # Attendance anomaly threshold (z-score vs the home team's season average)
+  anomaly_z_threshold: 2.0
+  # Cortex model used by the optional AI narrative model on Snowflake
+  cortex_model: "mistral-large2"
+
+models:
+  fan_analytics:
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: intermediate
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+    reporting:
+      +schema: reporting
+      +materialized: table
+    ai:
+      +schema: reporting
+      +materialized: table
+    semantic:
+      +schema: marts
+      +materialized: table
+
+data_tests:
+  fan_analytics:
+    +store_failures: true
+    +schema: dq_audit

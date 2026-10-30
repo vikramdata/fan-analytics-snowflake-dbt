@@ -1,0 +1,7 @@
+version: 2
+
+models:
+  - name: ai_kpi_narratives
+    description: >
+      Snowflake Cortex narratives for attendance anomalies (Snowflake target only).
+      Figures come from rpt_kpi_anomalies and are stored alongside each narrative for review.

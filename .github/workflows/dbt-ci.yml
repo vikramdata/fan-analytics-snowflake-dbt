@@ -1,0 +1,30 @@
+name: dbt CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -r requirements.txt
+      - name: Generate synthetic data (small)
+        run: python scripts/generate_data.py --scale 0.05
+      - name: dbt build (models + tests) on DuckDB
+        run: dbt build --profiles-dir . --target dev
+      - name: AI insights brief (template mode, verification on)
+        run: python scripts/ai_insights.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dbt-artifacts
+          path: |
+            target/run_results.json
+            target/manifest.json
+            reports/ai_insights.md

@@ -1,0 +1,37 @@
+// Power BI measures for the Fan & Ticketing dashboard.
+// Every measure mirrors a KPI defined once in dbt (docs/kpi_dictionary.md); Power BI only
+// aggregates governed columns, it does not redefine business logic.
+
+Net Ticket Revenue = SUM ( fct_game_attendance[NET_TICKET_REVENUE] )
+
+Tickets Sold = SUM ( fct_game_attendance[TICKETS_SOLD] )
+
+Attendance = SUM ( fct_game_attendance[ATTENDANCE] )
+
+Capacity = SUM ( fct_game_attendance[CAPACITY] )
+
+Sell-Through % = DIVIDE ( [Tickets Sold], [Capacity] )
+
+No-Show Rate = 1 - DIVIDE ( [Attendance], [Tickets Sold] )
+
+Net Revenue per Attendee = DIVIDE ( [Net Ticket Revenue], [Attendance] )
+
+Avg Attendance per Game =
+AVERAGEX ( VALUES ( fct_game_attendance[GAME_ID] ), CALCULATE ( [Attendance] ) )
+
+Ticket Buyers = DISTINCTCOUNT ( fct_ticket_orders[FAN_ID] )
+
+Engaged Fans = DISTINCTCOUNT ( fct_fan_engagement_daily[FAN_ID] )
+
+Net Revenue PY =
+CALCULATE ( [Net Ticket Revenue], SAMEPERIODLASTYEAR ( dim_date[DATE_DAY] ) )
+
+Net Revenue YoY % = DIVIDE ( [Net Ticket Revenue] - [Net Revenue PY], [Net Revenue PY] )
+
+Refund Rate =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( fct_ticket_orders ), fct_ticket_orders[ORDER_STATUS] = "REFUNDED" ),
+    COUNTROWS ( fct_ticket_orders )
+)
+
+Quarantined Orders = COUNTROWS ( dq_quarantine_ticket_orders )

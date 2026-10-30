@@ -1,0 +1,49 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Raw extracts as landed from source systems: ticketing (orders), CRM (fans),
+      digital platforms (engagement events) and league operations (teams, venues, games).
+      On Snowflake these are tables in FAN_ANALYTICS.RAW loaded by snowflake/02_load_raw.sql.
+      Locally (DuckDB) they are read straight from data/raw/*.csv.
+    schema: RAW
+    config:
+      # dbt-duckdb only: read every column as text so DuckDB and Snowflake (RAW = all VARCHAR) behave the same
+      external_location: "read_csv('data/raw/{name}.csv', header = true, all_varchar = true)"
+    tables:
+      - name: teams
+        description: League member clubs (league operations).
+        columns:
+          - name: team_id
+            data_tests: [unique, not_null]
+      - name: venues
+        description: Home venues and seating capacity (synthetic capacities).
+        columns:
+          - name: venue_id
+            data_tests: [unique, not_null]
+      - name: games
+        description: Game schedule and final scores (league operations).
+        columns:
+          - name: game_id
+            data_tests: [unique, not_null]
+      - name: fans
+        description: Fan accounts from the CRM.
+        columns:
+          - name: fan_id
+            data_tests: [unique, not_null]
+      - name: ticket_orders
+        description: Ticket orders from the ticketing platform, one row per order as extracted.
+        columns:
+          - name: order_id
+            description: Expected unique. Duplicates here mean the extract was loaded twice.
+            data_tests:
+              - unique:
+                  config:
+                    severity: warn
+              - not_null
+      - name: engagement_events
+        description: App and web engagement events from digital platforms.
+        columns:
+          - name: event_id
+            data_tests: [unique, not_null]

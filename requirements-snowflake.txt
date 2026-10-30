@@ -1,0 +1,4 @@
+-r requirements.txt
+dbt-snowflake>=1.10,<2.0
+snowflake-connector-python>=3.12
+anthropic>=0.40

@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: stg_league__teams
+    description: League clubs, cleaned and standardized.
+    columns:
+      - name: team_id
+        data_tests: [unique, not_null]
+      - name: division
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["West", "East"]
+
+  - name: stg_league__venues
+    description: Venues with integer capacity.
+    columns:
+      - name: venue_id
+        data_tests: [unique, not_null]
+      - name: capacity
+        data_tests: [not_null]
+
+  - name: stg_league__games
+    description: Game schedule and results with typed dates and scores.
+    columns:
+      - name: game_id
+        data_tests: [unique, not_null]
+      - name: game_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["REGULAR", "GREY_CUP"]
+      - name: home_team_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_league__teams')
+                field: team_id
+
+  - name: stg_crm__fans
+    description: Fan accounts from the CRM.
+    columns:
+      - name: fan_id
+        data_tests: [unique, not_null]
+
+  - name: stg_ticketing__orders
+    description: Ticket orders, typed and de-duplicated on order_id. Amounts in CAD.
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: order_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["COMPLETED", "REFUNDED"]
+      - name: section_tier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["PREMIUM", "LOWER_BOWL", "UPPER_BOWL", "END_ZONE"]
+      - name: unit_price
+        description: Price per ticket before discounts. Negative values are source defects, quarantined downstream.
+      - name: gross_amount
+        description: "{{ doc('gross_ticket_revenue') }}"
+      - name: net_amount
+        description: "{{ doc('net_ticket_revenue') }}"
+
+  - name: stg_digital__events
+    description: App and web engagement events.
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: platform
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["ios", "android", "web"]

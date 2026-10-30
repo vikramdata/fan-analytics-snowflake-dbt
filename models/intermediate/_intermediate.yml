@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: int_ticket_orders__validated
+    description: Every de-duplicated order with the first failing data quality rule in dq_issue (null = valid).
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: dq_issue
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["UNKNOWN_GAME", "UNKNOWN_FAN", "MISSING_PRICE", "NEGATIVE_PRICE",
+                         "INVALID_QUANTITY", "SCANS_EXCEED_QUANTITY", "ORDERED_AFTER_GAME"]
+
+  - name: int_game_ticket_totals
+    description: Ticket volume and revenue per game from valid, completed orders.
+    columns:
+      - name: game_id
+        data_tests: [unique, not_null]

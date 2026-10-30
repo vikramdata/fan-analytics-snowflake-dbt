@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: rpt_team_season_kpis
+    description: >
+      Executive KPI table — one row per team per season (regular-season home games).
+      Every metric uses the definitions in the KPI dictionary (docs/kpi_dictionary.md).
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [team_id, season]
+    columns:
+      - name: sell_through_pct
+        description: "{{ doc('sell_through_pct') }}"
+      - name: no_show_rate
+        description: "{{ doc('no_show_rate') }}"
+      - name: repeat_buyer_rate
+        description: "{{ doc('repeat_buyer_rate') }}"
+      - name: engaged_fans
+        description: "{{ doc('engaged_fan') }} Counted against the fan's favourite team."
+      - name: net_ticket_revenue
+        description: "{{ doc('net_ticket_revenue') }}"
+
+  - name: rpt_kpi_anomalies
+    description: Games with unusual attendance for the home team's season. Input to the AI insights layer.
+    columns:
+      - name: game_id
+        data_tests: [unique, not_null]
+      - name: direction
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["ABOVE", "BELOW"]
